@@ -1,4 +1,4 @@
-guse std::collections::VecDeque;
+use std::collections::VecDeque;
 use std::ffi::CStr;
 
 fn main() {
