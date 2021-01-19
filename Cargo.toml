@@ -1,0 +1,10 @@
+[package]
+name = "doit"
+version = "0.1.0"
+authors = ["post-rex <post-rex@pm.me>"]
+edition = "2018"
+
+[dependencies]
+libc = "0.2.82"
+pam = "0.7.0"
+clap = "2"
