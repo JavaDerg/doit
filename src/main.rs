@@ -1,30 +1,27 @@
-use std::collections::VecDeque;
+mod config;
+
+use std::collections::{HashMap, VecDeque};
 use std::ffi::CStr;
+use crate::config::{ConfigError, Config};
 
 fn main() {
-    let matches = clap::App::new("doit")
-        .args(&[
-            clap::Arg::with_name("install")
-                .long("install")
-                .conflicts_with("args"),
-            clap::Arg::with_name("target_id")
-                .short("i")
-                .takes_value(true)
-                .default_value("0"),
-            clap::Arg::with_name("args")
-                .takes_value(true)
-                .required_unless("install")
-                .multiple(true)
-                .last(true)
-        ])
-        .get_matches();
+    let mut term = term::stderr().expect("Unable to obtain stderr");
 
-    let mut args = matches.values_of_lossy("args").unwrap().into_iter().collect::<VecDeque<_>>();
-    if args.len() == 0 {
-        eprintln!("[DoIt] No command provided");
-        std::process::exit(1);
-    }
+    let config = match config::load_config() {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            term.fg(term::color::RED);
+            match err {
+                ConfigError::Io(err) => writeln!(term, "[DoIt] Io Error '{}'", err).unwrap(),
+                ConfigError::InvalidUserId(id) => writeln!(term, "[DoIt] User #{} does not exist", id).unwrap(),
+                ConfigError::InvalidUserName(name) => writeln!(term, "[DoIt] User {} does not exist", name).unwrap(),
+                ConfigError::InvalidCliArgs => (),
+            }
+            std::process::exit(1);
+        }
+    };
 
+    /*
     let target_uid = match matches.value_of_lossy("target_id").unwrap().parse::<u32>() {
         Ok(uid) => uid,
         Err(err) => {
@@ -78,6 +75,7 @@ fn main() {
             .code()
             .unwrap_or(0),
     );*/
+    */
 }
 
 fn authenticate(target_uid: u32) -> bool {

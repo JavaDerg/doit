@@ -5,6 +5,14 @@ authors = ["post-rex <post-rex@pm.me>"]
 edition = "2018"
 
 [dependencies]
+# Elevation + Auth
 libc = "0.2.82"
 pam = "0.7.0"
-clap = "2"
+# Config
+serde = { version = "1.0.120", features = ["derive"] }
+ron = "0.6.4"
+structopt = "0.3.21"
+# Terminal
+term = "0.7.0"
+# Matching
+fancy-regex = "0.4.1"
