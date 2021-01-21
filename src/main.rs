@@ -1,8 +1,9 @@
 mod config;
+mod user;
 
 use std::collections::{HashMap, VecDeque};
 use std::ffi::CStr;
-use crate::config::{ConfigError, Config};
+use crate::config::{ConfigError, Config, RuntimeConfig, ExecutionAction};
 
 fn main() {
     let mut term = term::stderr().expect("Unable to obtain stderr");
@@ -20,6 +21,15 @@ fn main() {
             std::process::exit(1);
         }
     };
+
+    match config.rt_cfg {
+        RuntimeConfig::Normal {
+            action,
+            target_user,
+        } => {
+
+        }
+    }
 
     /*
     let target_uid = match matches.value_of_lossy("target_id").unwrap().parse::<u32>() {

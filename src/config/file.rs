@@ -2,11 +2,34 @@ use serde::Deserializer;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
-pub type InnerFBConfig = HashMap<String, HashMap<Command, ExecRight>>;
+pub type InnerFBConfig = HashMap<UserPair, HashMap<Command, ExecRight>>;
 
-pub struct FileBoundConfig(pub InnerFBConfig);
+#[derive(Deserialize)]
+pub struct FileBoundConfig {
+    pub users: InnerFBConfig,
+    pub settings: InnerFBSettings,
+}
 
-pub type Command = Selector;
+#[derive(Deserialize)]
+pub struct InnerFBSettings {
+    login_timeout: u32,
+}
+
+#[derive(Deserialize)]
+pub enum Command {
+    Sel(Selector),
+    Shell,
+    All,
+}
+
+#[derive(Deserialize)]
+pub struct UserPair(Selector, UserMode);
+
+#[derive(Deserialize)]
+pub enum UserMode {
+    Default,
+    NoPw
+}
 
 #[derive(Hash, Eq, PartialEq, serde::Deserialize)]
 pub enum ExecRight {
@@ -22,18 +45,12 @@ pub enum Selector {
     Word(String),
     /// Regex match
     Regex(String),
+    /// Format string with dynamic values
+    Format(String),
 }
 
-impl<'de> serde::Deserialize<'de> for FileBoundConfig {
-    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
-        D: Deserializer<'de> {
-        let inner = InnerFBConfig::deserialize(deserializer)?;
-        Ok(Self(inner))
-    }
-}
-
-impl PartialEq<String> for Selector {
-    fn eq(&self, other: &String) -> bool {
+impl Selector {
+    fn check(&self, other: &String) -> bool {
         match self {
             Selector::Match(dc) => dc == other,
             Selector::Word(word) => {

@@ -11,8 +11,8 @@ use std::io::Error;
 const DEFAULT_CONFIG: &'static str = include_str!("../default.ron");
 
 pub struct Config {
-    rt_cfg: RuntimeConfig,
-    fb_cfg: Option<FileBoundConfig>,
+    pub rt_cfg: RuntimeConfig,
+    pub fb_cfg: Option<FileBoundConfig>,
 }
 
 pub enum RuntimeConfig {
