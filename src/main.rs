@@ -1,11 +1,28 @@
 mod config;
 mod user;
+mod linux;
 
 use std::collections::{HashMap, VecDeque};
 use std::ffi::CStr;
 use crate::config::{ConfigError, Config, RuntimeConfig, ExecutionAction};
 
+#[derive(Debug)]
+pub enum DoitError {
+
+}
+
 fn main() {
+    /*let uid = linux::get_user_id();
+    let pwd = linux::get_user(uid);
+    println!("{:#?}", pwd);
+    return;*/
+
+    if let Err(err) = run() {
+        todo!("{:?}", err)
+    }
+}
+
+fn run() -> Result<(), DoitError> {
     let mut term = term::stderr().expect("Unable to obtain stderr");
 
     let config = match config::load_config() {
@@ -26,10 +43,10 @@ fn main() {
         RuntimeConfig::Normal {
             action,
             target_user,
-        } => {
-
-        }
+        } => {}
     }
+
+    Ok(())
 
     /*
     let target_uid = match matches.value_of_lossy("target_id").unwrap().parse::<u32>() {
