@@ -21,5 +21,5 @@ strfmt = "0.1.6"
 [profile.release]
 opt-level = "s"
 lto = true
-d$codegen-units = 1
+codegen-units = 1
 panic = 'abort'
