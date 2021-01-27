@@ -17,3 +17,9 @@ term = "0.7.0"
 # Matching
 fancy-regex = "0.4.1"
 strfmt = "0.1.6"
+
+[profile.release]
+opt-level = "s"
+lto = true
+d$codegen-units = 1
+panic = 'abort'

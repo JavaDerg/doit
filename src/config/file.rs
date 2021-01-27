@@ -1,31 +1,30 @@
-use serde::Deserializer;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
 pub type InnerFBConfig = HashMap<UserPair, HashMap<Command, ExecRight>>;
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct FileBoundConfig {
     pub users: InnerFBConfig,
     pub settings: InnerFBSettings,
 }
 
-#[derive(Deserialize)]
+#[derive(Hash, Eq, PartialEq, serde::Deserialize)]
 pub struct InnerFBSettings {
     login_timeout: u32,
 }
 
-#[derive(Deserialize)]
+#[derive(Hash, Eq, PartialEq, serde::Deserialize)]
 pub enum Command {
     Sel(Selector),
     Shell,
     All,
 }
 
-#[derive(Deserialize)]
+#[derive(Hash, Eq, PartialEq, serde::Deserialize)]
 pub struct UserPair(Selector, UserMode);
 
-#[derive(Deserialize)]
+#[derive(Hash, Eq, PartialEq, serde::Deserialize)]
 pub enum UserMode {
     Default,
     NoPw
@@ -60,6 +59,9 @@ impl Selector {
                 .unwrap()
                 .is_match(other)
                 .expect("Regex failed to run"),
+            Selector::Format(_) => {
+                todo!("Add context for formatting")
+            }
         }
     }
 }
