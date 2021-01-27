@@ -1,3 +1,6 @@
+### Rust ###
 /target
-.idea/
-/doit
+
+### IDE ###
+/.vscode/
+/.idea/
