@@ -29,10 +29,7 @@ pub fn get_user_id() -> UserId {
 pub fn set_user(user: UserId) -> Result<(), LinuxError> {
     let ret = unsafe { setuid(user) };
     if ret != 0 {
-        return Err(match unsafe { *(__errno_location()) } {
-            EPERM => LinuxError::MissingPermission,
-            code => LinuxError::Other(code),
-        });
+        return Err(unsafe { get_err() });
     }
     Ok(())
 }
@@ -40,25 +37,34 @@ pub fn set_user(user: UserId) -> Result<(), LinuxError> {
 pub fn get_user(user: UserId) -> Result<User, LinuxError> {
     let pwd = unsafe { getpwuid(user) };
     if pwd.is_null() {
-        return Err(LinuxError::MissingPermission);
+        return Err(unsafe { get_err() });
     }
+    
     Ok(unsafe {
+        let pwd = *pwd;
         User {
-            name: deref_const_str_or_empty((*pwd).pw_name),
-            passwd: deref_const_str_or_empty((*pwd).pw_passwd),
-            user_id: (*pwd).pw_uid,
-            group_id: (*pwd).pw_gid,
-            comment: deref_const_str_or_empty((*pwd).pw_gecos),
-            home: deref_const_str_or_empty((*pwd).pw_dir),
-            shell: deref_const_str_or_empty((*pwd).pw_shell),
+            name: deref_const_str_or_empty(pwd.pw_name)?,
+            passwd: deref_const_str_or_empty(pwd.pw_passwd)?,
+            user_id: pwd.pw_uid,
+            group_id: pwd.pw_gid,
+            comment: deref_const_str_or_empty(pwd.pw_gecos)?,
+            home: deref_const_str_or_empty(pwd.pw_dir)?,
+            shell: deref_const_str_or_empty(pwd.pw_shell)?,
         }
     })
 }
 
-unsafe fn deref_const_str_or_empty(s: *const c_char) -> String {
+unsafe fn deref_const_str_or_empty(s: *const c_char) -> Result<String, LinuxError> {
     if s.is_null() {
         return String::from("");
     }
     let cstr = CStr::from_ptr(s);
     String::from_utf8_lossy(cstr.to_bytes()).to_string()
+}
+
+unsafe fn get_err() -> LinuxError {
+    match unsafe { *(__errno_location()) } {
+        EPERM => LinuxError::MissingPermission,
+        code => LinuxError::Other(code),
+    }
 }
