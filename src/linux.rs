@@ -8,6 +8,7 @@ pub type UserId = u32;
 pub enum LinuxError {
     MissingPermission,
     NotFound,
+    InvalidString,
     Other(i32),
 }
 
@@ -41,7 +42,7 @@ pub fn get_user(user: UserId) -> Result<User, LinuxError> {
     }
     
     Ok(unsafe {
-        let pwd = *pwd;
+        let pwd = &*pwd;
         User {
             name: deref_const_str_or_empty(pwd.pw_name)?,
             passwd: deref_const_str_or_empty(pwd.pw_passwd)?,
@@ -56,10 +57,10 @@ pub fn get_user(user: UserId) -> Result<User, LinuxError> {
 
 unsafe fn deref_const_str_or_empty(s: *const c_char) -> Result<String, LinuxError> {
     if s.is_null() {
-        return String::from("");
+        return Ok(String::default());
     }
     let cstr = CStr::from_ptr(s);
-    String::from_utf8_lossy(cstr.to_bytes()).to_string()
+    String::from_utf8(Vec::from(cstr.to_bytes())).map_err(|err| LinuxError::InvalidString)
 }
 
 unsafe fn get_err() -> LinuxError {
