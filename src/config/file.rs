@@ -45,7 +45,7 @@ pub enum Selector {
     /// Regex match
     Regex(String),
     /// Format string with dynamic values
-    Format(String),
+    // TODO Format(String),
 }
 
 impl Selector {
@@ -59,9 +59,7 @@ impl Selector {
                 .unwrap()
                 .is_match(other)
                 .expect("Regex failed to run"),
-            Selector::Format(_) => {
-                todo!("Add context for formatting")
-            }
+            // TODO Selector::Format(_) => {}
         }
     }
 }

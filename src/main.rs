@@ -8,7 +8,8 @@ use crate::config::{ConfigError, Config, RuntimeConfig, ExecutionAction};
 
 #[derive(Debug)]
 pub enum DoitError {
-
+    OsErr(linux::LinuxError),
+    ConfigErr(config::ConfigError),
 }
 
 fn main() {

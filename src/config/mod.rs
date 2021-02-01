@@ -1,18 +1,21 @@
-use crate::config::file::FileBoundConfig;
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
+use std::io::Error;
+use std::path::Path;
+
+pub use file::*;
+
+use crate::config::file::FileBoundConfig;
 
 mod cli;
 pub mod file;
 
-pub use file::*;
-use std::io::Error;
-
-const DEFAULT_CONFIG: &'static str = include_str!("../default.ron");
+const DEFAULT_CONFIG: &str = include_str!("../default.ron");
+const CONFIG_PATH: &Path = Path::new("/etc/doit.ron");
 
 pub struct Config {
     pub rt_cfg: RuntimeConfig,
-    pub fb_cfg: Option<FileBoundConfig>,
+    pub fb_cfg: Result<FileBoundConfig, ConfigError>,
 }
 
 pub enum RuntimeConfig {
@@ -24,15 +27,24 @@ pub enum RuntimeConfig {
 
 pub enum ExecutionAction {
     Command(String),
-    /// flag for clean environment
+    /// false: command `su {USERNAME}` will be executed
+    /// true: command `su {USERNAME} -` will be executed
     Shell(bool),
 }
 
 pub enum ConfigError {
     Io(std::io::Error),
+    ParseErr(ron::Error),
+    InvalidConfigPerm,
     InvalidCliArgs,
     InvalidUserId(u32),
     InvalidUserName(String),
+}
+
+impl From<std::io::Error> for ConfigError {
+    fn from(err: std::io::Error) -> Self {
+        ConfigError::Io(err)
+    }
 }
 
 pub fn load_config() -> Result<Config, ConfigError> {
@@ -44,31 +56,22 @@ pub fn load_config() -> Result<Config, ConfigError> {
     }
     let rt_config = gen_rt_config(config)?;
 
-    let file_cfg = if cfg!(debug_assertions) {
-        Some(String::from(DEFAULT_CONFIG))
+    let file_cfg: Result<String, ConfigError> = if cfg!(debug_assertions) {
+        Ok(String::from(DEFAULT_CONFIG))
     } else {
-        match std::fs::read_to_string("/etc/doit.ron") {
-            Ok(str) => Some(str),
-            Err(err) => {
-                todo!("{:?}", err);
-                None
-            }
+        if !crate::linux::is_readonly(CONFIG_PATH) {
+            return Err(ConfigError::InvalidConfigPerm);
         }
+        std::fs::read_to_string(CONFIG_PATH).into()
     };
     let fb_cfg = match file_cfg {
-        Some(str) => match ron::from_str(&str) {
-            Ok(fbc) => Some(fbc),
-            Err(err) => {
-                todo!("{:?}", err);
-                None
-            }
-        },
-        None => None,
+        Ok(cfg) => ron::from_str::<FileBoundConfig>(&str).map_err(ConfigError::ParseErr),
+        x => x,
     };
 
     Ok(Config {
         rt_cfg: rt_config,
-        fb_cfg
+        fb_cfg,
     })
 }
 
